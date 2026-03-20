@@ -213,6 +213,7 @@ extension Ghostty {
         /// Current scrollbar state, cached here for persistence across rebuilds
         /// of the SwiftUI view hierarchy, for example when changing splits
         var scrollbar: Ghostty.Action.Scrollbar?
+        weak var viewportScrollContainer: SurfaceScrollView?
 
         // Notification identifiers associated with this surface
         var notificationIdentifiers: Set<String> = []
@@ -1033,6 +1034,14 @@ extension Ghostty {
 
         override func scrollWheel(with event: NSEvent) {
             guard let surfaceModel else { return }
+
+            // When the terminal hasn't explicitly captured the mouse, prefer
+            // native viewport scrolling over Ghostty's alternate-scroll
+            // translation so wheel/trackpad gestures don't become Up/Down input.
+            if !surfaceModel.mouseCaptured,
+               viewportScrollContainer?.handleViewportScrollWheel(event) == true {
+                return
+            }
 
             var x = event.scrollingDeltaX
             var y = event.scrollingDeltaY

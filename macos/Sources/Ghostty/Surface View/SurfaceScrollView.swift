@@ -57,6 +57,7 @@ class SurfaceScrollView: NSView {
         documentView.addSubview(surfaceView)
 
         super.init(frame: .zero)
+        surfaceView.viewportScrollContainer = self
 
         // Our scroll view is our only view
         addSubview(scrollView)
@@ -265,6 +266,10 @@ class SurfaceScrollView: NSView {
     /// Converts the current scroll position to a row number and sends a `scroll_to_row` action
     /// to the terminal core. Only sends actions when the row changes to avoid IPC spam.
     private func handleLiveScroll() {
+        syncViewportPositionToSurface()
+    }
+
+    private func syncViewportPositionToSurface() {
         // If our cell height is currently zero then we avoid a div by zero below
         // and just don't scroll (there's no where to scroll anyways). This can
         // happen with a tiny terminal.
@@ -283,6 +288,15 @@ class SurfaceScrollView: NSView {
 
         // Use the keybinding action to scroll.
         _ = surfaceView.surfaceModel?.perform(action: "scroll_to_row:\(row)")
+    }
+
+    @discardableResult
+    func handleViewportScrollWheel(_ event: NSEvent) -> Bool {
+        guard surfaceView.scrollbar != nil else { return false }
+        scrollView.scrollWheel(with: event)
+        synchronizeSurfaceView()
+        syncViewportPositionToSurface()
+        return true
     }
 
     /// Handles scrollbar state updates from the terminal core.
