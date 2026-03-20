@@ -1035,11 +1035,9 @@ extension Ghostty {
         override func scrollWheel(with event: NSEvent) {
             guard let surfaceModel else { return }
 
-            // When the terminal hasn't explicitly captured the mouse, prefer
-            // native viewport scrolling over Ghostty's alternate-scroll
-            // translation so wheel/trackpad gestures don't become Up/Down input.
-            if !surfaceModel.mouseCaptured,
-               viewportScrollContainer?.handleViewportScrollWheel(event) == true {
+            // In PUI, wheel and trackpad scrolling should always move terminal
+            // history instead of being forwarded as application mouse input.
+            if viewportScrollContainer?.handleViewportScrollWheel(event) == true {
                 return
             }
 
