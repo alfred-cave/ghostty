@@ -292,10 +292,19 @@ class SurfaceScrollView: NSView {
 
     @discardableResult
     func handleViewportScrollWheel(_ event: NSEvent) -> Bool {
-        guard surfaceView.scrollbar != nil else { return false }
-        scrollView.scrollWheel(with: event)
-        synchronizeSurfaceView()
-        syncViewportPositionToSurface()
+        guard let surfaceModel = surfaceView.surfaceModel else { return false }
+
+        let cellHeight = max(surfaceView.cellSize.height, 1)
+        var deltaY = event.scrollingDeltaY
+        if event.hasPreciseScrollingDeltas {
+            deltaY *= 2
+        }
+
+        guard deltaY != 0 else { return false }
+
+        let magnitude = max(1, Int(abs(deltaY / cellHeight).rounded(.awayFromZero)))
+        let signedLines = deltaY > 0 ? -magnitude : magnitude
+        _ = surfaceModel.perform(action: "scroll_page_lines:\(signedLines)")
         return true
     }
 
